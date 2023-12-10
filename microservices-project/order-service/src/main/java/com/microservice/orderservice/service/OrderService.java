@@ -1,15 +1,19 @@
 package com.microservice.orderservice.service;
 
 
+import com.microservice.orderservice.dto.InventoryResponse;
 import com.microservice.orderservice.dto.OrderLineItemsDto;
 import com.microservice.orderservice.dto.OrderRequest;
 import com.microservice.orderservice.model.Order;
 import com.microservice.orderservice.model.OrderLineItems;
 import com.microservice.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.boot.model.naming.IllegalIdentifierException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +23,7 @@ import java.util.UUID;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final WebClient webClient;
 
     public void placeOrder(OrderRequest orderRequest){
         Order order = new Order();
@@ -31,14 +36,31 @@ public class OrderService {
 
         order.setOrderLineItemsList(orderLineItems);
 
-        orderRepository.save(order);
+        List<String> skuCodes = order.getOrderLineItemsList().stream()
+                .map(OrderLineItems::getSkuCode)
+                .toList();
+
+        // Call inventory service and place order if product exisis
+        InventoryResponse[] inventoryResponseArray = webClient.get()
+                .uri("http://localhost:8004/api/v1/inventory", uriBuilder -> uriBuilder.queryParam("skuCode", skuCodes).build())
+                .retrieve()
+                .bodyToMono(InventoryResponse[].class)
+                .block();
+
+        boolean allProductsInStock= Arrays.stream(inventoryResponseArray).allMatch(InventoryResponse::isInStock);
+
+        if(allProductsInStock){
+            orderRepository.save(order);
+        }else{
+            throw new IllegalIdentifierException("Product is not in stock. Please try again later.");
+        }
     }
 
-    private OrderLineItems mapToDto(OrderLineItemsDto orderLineItemsDto){
+    private OrderLineItems mapToDto(OrderLineItemsDto orderLineItemsDto) {
         OrderLineItems orderLineItems = new OrderLineItems();
         orderLineItems.setPrice(orderLineItemsDto.getPrice());
-        orderLineItems.setQuantity(orderLineItems.getQuantity());
-        orderLineItems.setSkuCode(orderLineItems.getSkuCode());
-        return  orderLineItems;
+        orderLineItems.setQuantity(orderLineItemsDto.getQuantity());
+        orderLineItems.setSkuCode(orderLineItemsDto.getSkuCode());
+        return orderLineItems;
     }
 }
