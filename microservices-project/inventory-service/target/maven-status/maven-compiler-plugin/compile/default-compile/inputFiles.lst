@@ -1,5 +1,6 @@
 G:\Projects\Microservices\microservices-project\inventory-service\src\main\java\com\microservice\inventoryservice\model\Inventory.java
 G:\Projects\Microservices\microservices-project\inventory-service\src\main\java\com\microservice\inventoryservice\controller\InventoryController.java
 G:\Projects\Microservices\microservices-project\inventory-service\src\main\java\com\microservice\inventoryservice\repository\InventoryRepository.java
+G:\Projects\Microservices\microservices-project\inventory-service\src\main\java\com\microservice\inventoryservice\dto\InventoryResponse.java
 G:\Projects\Microservices\microservices-project\inventory-service\src\main\java\com\microservice\inventoryservice\InventoryServiceApplication.java
 G:\Projects\Microservices\microservices-project\inventory-service\src\main\java\com\microservice\inventoryservice\service\InventoryService.java
